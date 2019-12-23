@@ -5,13 +5,13 @@ const app = require('../lib/app');
 const connect = require('../lib/utils/connect');
 const mongoose = require('mongoose');
 const Trip = require('../lib/models/Trip');
-const ItineraryItem = require('../lib/models/ItineraryItem');
+const ExplorationItem = require('../lib/models/ExplorationItem');
 
-jest.mock('../lib/services/weather.js', () => ({
+jest.mock('../lib/services/forecast.js', () => ({
   getWOEID() {
     return Promise.resolve('12345');
   },
-  getWeather() {
+  getForecast() {
     return Promise.resolve({
       min_temp: 5
     });
@@ -23,13 +23,13 @@ describe('app routes', () => {
   beforeEach(() => mongoose.connection.dropDatabase());
 
   let trip;
-  let itineraryItem;
+  let explorationItem;
   beforeEach(async() => {
     trip = await Trip.create({
       name: 'Canada Spring 2020'
     });
 
-    itineraryItem = await ItineraryItem.create({
+    explorationItem = await ExplorationItem.create({
       trip: trip._id,
       startDate: new Date('2020-03-21'),
       endDate: new Date('2020-03-22'),
@@ -58,11 +58,11 @@ describe('app routes', () => {
         expect(res.body).toEqual({
           _id: trip.id,
           name: 'Canada Spring 2020',
-          itinerary: [{
-            _id: itineraryItem.id,
+          exploration: [{
+            _id: explorationItem.id,
             trip: trip.id,
-            startDate: itineraryItem.startDate.toISOString(),
-            endDate: itineraryItem.endDate.toISOString(),
+            startDate: explorationItem.startDate.toISOString(),
+            endDate: explorationItem.endDate.toISOString(),
             temp: 5,
             name: 'Visit City Hall',
             woeid: '2487956',
@@ -102,7 +102,7 @@ describe('app routes', () => {
       });
   });
 
-  it('can add an itinerary item', () => {
+  it('can add an exploration item', () => {
     return request(app)
       .post(`/api/v1/trips/${trip.id}/item`)
       .send({
@@ -113,7 +113,7 @@ describe('app routes', () => {
         longitude: -122.41964
       })
       .then(res => {
-        expect(res.body.itinerary).toContainEqual({
+        expect(res.body.exploration).toContainEqual({
           _id: expect.any(String),
           trip: trip.id,
           startDate: '2020-03-23T00:00:00.000Z',
@@ -127,11 +127,11 @@ describe('app routes', () => {
       });
   });
 
-  it('can delete an itinerary item', () => {
+  it('can delete an exploration item', () => {
     return request(app)
-      .delete(`/api/v1/trips/${trip.id}/item/${itineraryItem.id}`)
+      .delete(`/api/v1/trips/${trip.id}/item/${explorationItem.id}`)
       .then(res => {
-        expect(res.body.itinerary).toHaveLength(0);
+        expect(res.body.exploration).toHaveLength(0);
       });
   });
 
